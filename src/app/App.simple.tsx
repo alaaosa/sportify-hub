@@ -24,7 +24,6 @@ import { ReportsPage } from "./components/ReportsPage";
 // import { SettingsPage } from "./components/SettingsPage";
 import type { Page } from "./components/Navbar";
 import { getStoredUserRole } from "./utils/auth";
-import ErrorBoundary from "./ErrorBoundary";
 
 function AppContent() {
   const [userRole, setUserRole] = useState(getStoredUserRole());
@@ -153,9 +152,9 @@ function AppContent() {
 function AppShell() {
   return (
     <BrowserRouter>
-      <ErrorBoundary>
+      {/* <ErrorBoundary> */}
         <AppContent />
-      </ErrorBoundary>
+      {/* </ErrorBoundary> */}
     </BrowserRouter>
   );
 }
