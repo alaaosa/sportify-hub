@@ -103,9 +103,9 @@ const CLUB_IMAGES = [
 
 const INITIAL_CLUBS: Club[] = [];
 
-const ALL_SPORTS = [];
+const ALL_SPORTS: string[] = [];
 
-const ALL_FACILITIES = [];
+const ALL_FACILITIES: string[] = [];
 
 const ALL_CITIES = [
   "San Francisco",
@@ -440,8 +440,8 @@ export function AdminDashboard({ navigate }: AdminDashboardProps) {
   };
 
   useEffect(() => {
-    if (showControlModal) loadControlLists();
-  }, [showControlModal]);
+    if (showAddModal || showControlModal) loadControlLists();
+  }, [showAddModal, showControlModal]);
 
   const filtered = useMemo(() => {
     let list = clubs.filter((c) => {
@@ -510,12 +510,14 @@ export function AdminDashboard({ navigate }: AdminDashboardProps) {
     setFormSports([]);
     setFormFacilities([]);
     setFormTab(0);
+    void loadControlLists();
     setShowAddModal(true);
   };
 
   const openEdit = (club: Club) => {
     prevSearchRef.current = searchQ;
     setSearchQ("");
+    void loadControlLists();
     setFormData({
       name: club.name,
       description: club.description,
@@ -580,20 +582,44 @@ export function AdminDashboard({ navigate }: AdminDashboardProps) {
     };
 
     if (editClub) {
-      setClubs((cs) =>
-        cs.map((c) =>
-          c.id === editClub.id
-            ? {
-                ...c,
-                ...formData,
-                sports: formSports,
-                facilities: formFacilities,
-              }
-            : c,
-        ),
-      );
-      setEditClub(null);
-      flash("Club updated successfully.");
+      try {
+        const response = await axios.put(
+          `${API_BASE_URL}/admin/${editClub.id}`,
+          payload,
+          {
+            headers: {
+              ...getAuthHeaders(),
+              "Content-Type": "application/json",
+            },
+          },
+        );
+        const data = response.data;
+        if (data?.success !== true) {
+          throw new Error(data?.message || "Failed to update club.");
+        }
+
+        setClubs((cs) =>
+          cs.map((c) =>
+            c.id === editClub.id
+              ? {
+                  ...c,
+                  ...formData,
+                  sports: formSports,
+                  facilities: formFacilities,
+                }
+              : c,
+          ),
+        );
+        closeModal();
+        flash("Club updated successfully.");
+      } catch (error) {
+        console.error("Failed to update club:", error);
+        const errMessage =
+          error instanceof Error
+            ? error.message
+            : "Unable to update club. Please try again.";
+        alert(errMessage);
+      }
       return;
     }
 

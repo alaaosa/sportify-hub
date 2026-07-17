@@ -21,7 +21,7 @@ import { BookingsPage } from "./components/BookingsPage";
 import { CoachesPage } from "./components/CoachesPage";
 import { PaymentsPage } from "./components/PaymentsPage";
 import { ReportsPage } from "./components/ReportsPage";
-import { SettingsPage } from "./components/SettingsPage";
+// import { SettingsPage } from "./components/SettingsPage";
 import type { Page } from "./components/Navbar";
 import { getStoredUserRole } from "./utils/auth";
 import ErrorBoundary from "./ErrorBoundary";
@@ -119,8 +119,8 @@ function AppContent() {
         return <PaymentsPage navigate={navigate} />;
       case "reports":
         return <ReportsPage navigate={navigate} />;
-      case "settings":
-        return <SettingsPage navigate={navigate} />;
+      // case "settings":
+      //   return <SettingsPage navigate={navigate} />;
       default:
         return <LandingPage navigate={navigate} />;
     }

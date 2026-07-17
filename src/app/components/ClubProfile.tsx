@@ -70,7 +70,8 @@ const getAuthHeaders = (): Record<string, string> => {
   const headers: Record<string, string> = { Accept: "application/json" };
   if (token) headers.Authorization = `Bearer ${token}`;
   return headers;
-};const normalizeActivities = (payload: any) => {
+};
+const normalizeActivities = (payload: any) => {
   const list = Array.isArray(payload)
     ? payload
     : Array.isArray(payload?.data)
@@ -191,6 +192,50 @@ const normalizeCoaches = (payload: any) => {
   }));
 };
 
+const FACILITY_ICONS: Record<
+  string,
+  React.FC<{ size: number; color: string }>
+> = {
+  wifi: Wifi,
+  car: Car,
+  coffee: Coffee,
+  shield: Shield,
+  pool: Waves,
+  default: Trophy,
+};
+
+interface ClubFacility {
+  id: number;
+  label: string;
+  icon: React.FC<{ size: number; color: string }>;
+}
+
+const normalizeClubFacilities = (payload: any): ClubFacility[] => {
+  const list = Array.isArray(payload)
+    ? payload
+    : Array.isArray(payload?.data)
+      ? payload.data
+      : [];
+  return list.map((item: any, index: number) => {
+    const rawLabel =
+      typeof item === "string"
+        ? item
+        : item?.facility || item?.name || item?.label || "Facility";
+    const label = String(rawLabel).trim();
+    const key = label.toLowerCase();
+    const icon =
+      FACILITY_ICONS[key] ||
+      FACILITY_ICONS[
+        Object.keys(FACILITY_ICONS).find((k) => key.includes(k)) || "default"
+      ];
+    return {
+      id: index + 1,
+      label,
+      icon,
+    };
+  });
+};
+
 const reviews = [
   {
     name: "Ahmed Hassan",
@@ -242,8 +287,6 @@ const galleryImages = [
   IMGS.gym1,
 ];
 
-const facilities = [];
-
 interface ClubProfileProps {
   navigate: (page: Page) => void;
 }
@@ -258,6 +301,8 @@ export function ClubProfile({ navigate }: ClubProfileProps) {
   const [eventsData, setEventsData] = useState<any[]>([]);
   const [plansData, setPlansData] = useState<any[]>([]);
   const [coachesData, setCoachesData] = useState<any[]>([]);
+  const [clubInfo, setClubInfo] = useState<any | null>(null);
+  const clubName = clubInfo?.clubName || clubInfo?.name || "Arena Sports Club";
   const [loading, setLoading] = useState(true);
   const [selectedActivity, setSelectedActivity] = useState<any | null>(null);
   const [activitySlots, setActivitySlots] = useState<any[]>([]);
@@ -283,7 +328,7 @@ export function ClubProfile({ navigate }: ClubProfileProps) {
       const results = await Promise.allSettled(
         events.map((event) =>
           axios.get(
-                      `${API_BASE_URL}/club/${clubId}/event/${event.id}/registered`,
+            `${API_BASE_URL}/club/${clubId}/event/${event.id}/registered`,
             {
               headers: {
                 ...getAuthHeaders(),
@@ -324,7 +369,7 @@ export function ClubProfile({ navigate }: ClubProfileProps) {
       setJoiningEventId(event.id);
       setJoinEventMessage("");
       const response = await axios.post(
-              `${API_BASE_URL}/club/${clubId}/event/${event.id}/register`,
+        `${API_BASE_URL}/club/${clubId}/event/${event.id}/register`,
         {},
         {
           headers: {
@@ -414,7 +459,7 @@ export function ClubProfile({ navigate }: ClubProfileProps) {
       setUnjoiningEventId(event.id);
       setJoinEventMessage("");
       const response = await axios.delete(
-              `${API_BASE_URL}/club/${clubId}/event/${event.id}/unregister`,
+        `${API_BASE_URL}/club/${clubId}/event/${event.id}/unregister`,
         {
           headers: {
             ...getAuthHeaders(),
@@ -476,8 +521,11 @@ export function ClubProfile({ navigate }: ClubProfileProps) {
     const loadClubProfileData = async () => {
       setLoading(true);
       try {
-        const [activitiesRes, eventsRes, plansRes, coachesRes] =
+        const [clubRes, activitiesRes, eventsRes, plansRes, coachesRes] =
           await Promise.allSettled([
+            axios.get(`${API_BASE_URL}/admin/${clubId}`, {
+              headers: { Accept: "application/json" },
+            }),
             axios.get(`${API_BASE_URL}/club/${clubId}/activity`, {
               headers: { Accept: "application/json" },
             }),
@@ -492,6 +540,8 @@ export function ClubProfile({ navigate }: ClubProfileProps) {
             }),
           ]);
 
+        const clubResult =
+          clubRes.status === "fulfilled" ? clubRes.value?.data : null;
         const activitiesResult =
           activitiesRes.status === "fulfilled"
             ? activitiesRes.value?.data
@@ -503,6 +553,7 @@ export function ClubProfile({ navigate }: ClubProfileProps) {
         const coachesResult =
           coachesRes.status === "fulfilled" ? coachesRes.value?.data : null;
 
+        setClubInfo(clubResult?.data ?? null);
         setActivitiesData(normalizeActivities(activitiesResult));
         const normalizedEvents = normalizeEvents(eventsResult);
         setEventsData(normalizedEvents);
@@ -533,7 +584,7 @@ export function ClubProfile({ navigate }: ClubProfileProps) {
 
     try {
       const response = await axios.get(
-              `${API_BASE_URL}/club/${clubId}/activity/${activity.id}/slots`,
+        `${API_BASE_URL}/club/${clubId}/activity/${activity.id}/slots`,
         { headers: getAuthHeaders() },
       );
       const payload = response.data;
@@ -563,7 +614,7 @@ export function ClubProfile({ navigate }: ClubProfileProps) {
     try {
       setBookingInProgressId(slot.id);
       const response = await axios.post(
-              `${API_BASE_URL}/club/${clubId}/activity/${selectedActivity.id}/slot/${slot.id}/book`,
+        `${API_BASE_URL}/club/${clubId}/activity/${selectedActivity.id}/slot/${slot.id}/book`,
         {},
         {
           headers: {
@@ -591,7 +642,6 @@ export function ClubProfile({ navigate }: ClubProfileProps) {
     <div style={{ background: "#F8FAFC", minHeight: "100vh" }}>
       <Navbar navigate={navigate} currentPage="club-profile" />
 
-      
       <div style={{ position: "relative", height: 380, overflow: "hidden" }}>
         <img
           src={IMGS.hero}
@@ -606,7 +656,7 @@ export function ClubProfile({ navigate }: ClubProfileProps) {
               "linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.7) 100%)",
           }}
         />
-        
+
         <div
           style={{
             position: "absolute",
@@ -628,7 +678,6 @@ export function ClubProfile({ navigate }: ClubProfileProps) {
             }}
           >
             <div style={{ display: "flex", alignItems: "flex-end", gap: 20 }}>
-              
               <div
                 style={{
                   width: 88,
@@ -663,7 +712,7 @@ export function ClubProfile({ navigate }: ClubProfileProps) {
                       letterSpacing: "-0.5px",
                     }}
                   >
-                    Arena Sports Club
+                    {clubName}
                   </h1>
                   <div
                     style={{
@@ -805,9 +854,7 @@ export function ClubProfile({ navigate }: ClubProfileProps) {
         </div>
       </div>
 
-      
       <div style={{ maxWidth: 1280, margin: "0 auto", padding: "36px 24px" }}>
-        
         {activeTab === "Overview" && (
           <div
             style={{
@@ -818,7 +865,6 @@ export function ClubProfile({ navigate }: ClubProfileProps) {
             className="grid-cols-1 xl:grid-cols-3"
           >
             <div>
-              
               <div
                 style={{
                   background: "white",
@@ -838,36 +884,35 @@ export function ClubProfile({ navigate }: ClubProfileProps) {
                 >
                   About the Club
                 </h2>
-                <p
-                  style={{
-                    fontSize: 14,
-                    color: "#374151",
-                    lineHeight: 1.8,
-                    margin: 0,
-                  }}
-                >
-                  Arena Sports Club is San Francisco's premier multi-sport
-                  facility, offering world-class amenities across 15,000 sq ft
-                  of indoor and outdoor space. Founded in 2012, we've grown to
-                  serve over 3,000 active members across all fitness levels and
-                  sports disciplines.
-                </p>
-                <p
-                  style={{
-                    fontSize: 14,
-                    color: "#374151",
-                    lineHeight: 1.8,
-                    margin: "12px 0 0",
-                  }}
-                >
-                  Our professional coaching staff, state-of-the-art equipment,
-                  and welcoming community make us the top choice for athletes,
-                  fitness enthusiasts, and families looking for a comprehensive
-                  sports experience.
-                </p>
+                {(() => {
+                  const rawDescription =
+                    clubInfo?.description || clubInfo?.decription || "";
+                  const descriptionLines = rawDescription
+                    ? rawDescription
+                        .split(/\r?\n/)
+                        .map((line: string) => line.trim())
+                        .filter(Boolean)
+                    : [
+                        "Arena Sports Club is San Francisco's premier multi-sport facility, offering world-class amenities across 15,000 sq ft of indoor and outdoor space. Founded in 2012, we've grown to serve over 3,000 active members across all fitness levels and sports disciplines.",
+                        "Our professional coaching staff, state-of-the-art equipment, and welcoming community make us the top choice for athletes, fitness enthusiasts, and families looking for a comprehensive sports experience.",
+                      ];
+
+                  return descriptionLines.map((line: string, index: number) => (
+                    <p
+                      key={index}
+                      style={{
+                        fontSize: 14,
+                        color: "#374151",
+                        lineHeight: 1.8,
+                        margin: index === 0 ? 0 : "12px 0 0",
+                      }}
+                    >
+                      {line}
+                    </p>
+                  ));
+                })()}
               </div>
 
-              
               <div
                 style={{
                   background: "white",
@@ -895,9 +940,9 @@ export function ClubProfile({ navigate }: ClubProfileProps) {
                     gap: 12,
                   }}
                 >
-                  {facilities.map((f) => (
+                  {normalizeClubFacilities(clubInfo?.facilities).map((f) => (
                     <div
-                      key={f.label}
+                      key={f.id}
                       style={{
                         display: "flex",
                         alignItems: "center",
@@ -978,7 +1023,6 @@ export function ClubProfile({ navigate }: ClubProfileProps) {
                   <div
                     style={{ position: "absolute", inset: 0, opacity: 0.05 }}
                   >
-                    
                     {[...Array(12)].map((_, i) => (
                       <div
                         key={i}
@@ -1029,7 +1073,7 @@ export function ClubProfile({ navigate }: ClubProfileProps) {
                       margin: 0,
                     }}
                   >
-                    Arena Sports Club
+                    {clubName}
                   </p>
                   <p
                     style={{
@@ -1200,7 +1244,6 @@ export function ClubProfile({ navigate }: ClubProfileProps) {
                 </button>
               </div>
 
-              
               <div
                 style={{
                   background: "white",
@@ -1307,7 +1350,6 @@ export function ClubProfile({ navigate }: ClubProfileProps) {
           </div>
         )}
 
-        
         {activeTab === "Activities" && (
           <div>
             <div
@@ -2872,5 +2914,3 @@ export function ClubProfile({ navigate }: ClubProfileProps) {
     </div>
   );
 }
-
-
