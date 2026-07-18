@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { Menu, X, Zap, ChevronDown, Shield } from "lucide-react";
+import { Zap, ChevronDown, Shield } from "lucide-react";
 import { getStoredUserRole, clearAuthData } from "../utils/auth";
 import { getStoredClubId } from "../utils/club";
 
@@ -27,7 +27,6 @@ interface NavbarProps {
 }
 
 export function Navbar({ navigate, currentPage }: NavbarProps) {
-  const [mobileOpen, setMobileOpen] = useState(false);
   const [userRole, setUserRole] = useState(getStoredUserRole());
   const location = useLocation();
 
@@ -154,6 +153,7 @@ export function Navbar({ navigate, currentPage }: NavbarProps) {
           alignItems: "center",
           justifyContent: "space-between",
           height: 68,
+          position: "relative",
         }}
       >
         {}
@@ -196,7 +196,14 @@ export function Navbar({ navigate, currentPage }: NavbarProps) {
 
         {}
         <div
-          style={{ display: "flex", alignItems: "center", gap: 32 }}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 32,
+            position: "absolute",
+            left: "50%",
+            transform: "translateX(-50%)",
+          }}
           className="hidden md:flex"
         >
           {links.map((item) => (
@@ -237,159 +244,9 @@ export function Navbar({ navigate, currentPage }: NavbarProps) {
         </div>
 
         {}
-        <div
-          style={{ display: "flex", alignItems: "center", gap: 10 }}
-          className="hidden md:flex"
-        >
-          <button
-            onClick={() => {
-              if (userRole) {
-                clearAuthData();
-                setUserRole(null);
-                handleNavigate("landing");
-                return;
-              }
-              handleNavigate("auth");
-            }}
-            style={{
-              padding: "8px 20px",
-              borderRadius: 10,
-              border: "1.5px solid #E5E7EB",
-              background: "white",
-              color: "#374151",
-              fontSize: 14,
-              fontWeight: 500,
-              cursor: "pointer",
-              transition: "all 0.2s",
-            }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.borderColor = "#0F62FE")
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.borderColor = "#E5E7EB")
-            }
-          >
-            {userRole ? "Log out" : "Log in"}
-          </button>
-          <button
-            onClick={() => handleNavigate("dashboard")}
-            style={{
-              padding: "8px 20px",
-              borderRadius: 10,
-              background: "linear-gradient(135deg, #0F62FE 0%, #0043CE 100%)",
-              color: "white",
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: "pointer",
-              border: "none",
-              boxShadow: "0 4px 12px rgba(15,98,254,0.3)",
-              transition: "all 0.2s",
-            }}
-          >
-            Get Started
-          </button>
-        </div>
-
-        {}
-        <button
-          onClick={() => setMobileOpen(!mobileOpen)}
-          style={{
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            padding: 4,
-          }}
-          className="md:hidden"
-        >
-          {mobileOpen ? (
-            <X size={24} color="#111827" />
-          ) : (
-            <Menu size={24} color="#111827" />
-          )}
-        </button>
       </div>
 
       {}
-      {mobileOpen && (
-        <div
-          style={{
-            background: "white",
-            borderTop: "1px solid #E5E7EB",
-            padding: "16px 24px",
-            display: "flex",
-            flexDirection: "column",
-            gap: 4,
-          }}
-        >
-          {links.map((item) => (
-            <button
-              key={item.page}
-              onClick={() => {
-                handleNavigate(item.page);
-                setMobileOpen(false);
-              }}
-              style={{
-                background: currentPage === item.page ? "#EFF4FF" : "none",
-                border: "none",
-                cursor: "pointer",
-                fontSize: 15,
-                fontWeight: 500,
-                color:
-                  currentPage === item.page
-                    ? "#0F62FE"
-                    : item.page === "admin"
-                      ? "#6B7280"
-                      : "#374151",
-                padding: "10px 12px",
-                borderRadius: 10,
-                textAlign: "left",
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-              }}
-            >
-              {item.icon}
-              {item.label}
-            </button>
-          ))}
-          <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
-            <button
-              style={{
-                flex: 1,
-                padding: "10px",
-                borderRadius: 10,
-                border: "1.5px solid #E5E7EB",
-                background: "white",
-                color: "#374151",
-                fontSize: 14,
-                fontWeight: 500,
-                cursor: "pointer",
-              }}
-            >
-              Log in
-            </button>
-            <button
-              onClick={() => {
-                navigate("dashboard");
-                setMobileOpen(false);
-              }}
-              style={{
-                flex: 1,
-                padding: "10px",
-                borderRadius: 10,
-                background: "#0F62FE",
-                color: "white",
-                fontSize: 14,
-                fontWeight: 600,
-                cursor: "pointer",
-                border: "none",
-              }}
-            >
-              Get Started
-            </button>
-          </div>
-        </div>
-      )}
     </nav>
   );
 }

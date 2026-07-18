@@ -1,7 +1,7 @@
 import { useParams } from "react-router-dom";
 import type { Page } from "../components/Navbar";
 
-const DEFAULT_CLUB_ID = 5;
+const DEFAULT_CLUB_ID = 5; //5 => Al Ahly Sporting Club , 6=> Null , 7 
 
 export const parseClubId = (value?: string | null): number => {
   const parsed = Number(value);

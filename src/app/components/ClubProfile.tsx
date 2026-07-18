@@ -5,28 +5,26 @@ import {
   MapPin,
   CheckCircle,
   Heart,
+  Zap,
   Share2,
-  Phone,
-  Globe,
+  Check,
   Clock,
   Users,
-  Trophy,
-  Dumbbell,
-  Waves,
-  Zap,
+  Phone,
   ChevronRight,
+  Camera,
+  Quote,
   Calendar,
-  Shield,
   Wifi,
   Car,
   Coffee,
-  Check,
-  Quote,
-  Camera,
+  Shield,
+  Waves,
+  Trophy,
 } from "lucide-react";
 import { Navbar } from "./Navbar";
-import { Footer } from "./Footer";
 import { Page } from "./Navbar";
+import { Footer } from "./Footer";
 import { useClubId } from "../utils/club";
 
 const IMGS = {
@@ -317,6 +315,51 @@ export function ClubProfile({ navigate }: ClubProfileProps) {
   const [joinEventMessage, setJoinEventMessage] = useState("");
 
   const clubId = useClubId();
+
+  const formatHours = (info: any) => {
+    if (!info) return "See schedule";
+    // prefer server field name (note: backend and admin use `workingHoures`)
+    const raw =
+      info.workingHoures ||
+      info.workingHours ||
+      info.openingHours ||
+      info.opening_hours ||
+      info.hours ||
+      info.open_time ||
+      info.opening_time;
+
+    if (raw)
+      return typeof raw === "string"
+        ? raw
+        : Array.isArray(raw)
+          ? raw.join(" ")
+          : String(raw);
+
+    const open = info.open || info.start_time || info.opens_at;
+    const close = info.close || info.end_time || info.closes_at;
+    if (open && close) return `${open} - ${close}`;
+    return "See schedule";
+  };
+
+  const formatMembers = (info: any) => {
+    const m =
+      info?.membersCount ??
+      info?.members ??
+      info?.member_count ??
+      info?.activeMembers;
+    if (m == null) return "0 members";
+    if (typeof m === "number") {
+      const s = new Intl.NumberFormat().format(m);
+      return m >= 1000 ? `${s}+ members` : `${s} members`;
+    }
+    return String(m);
+  };
+
+  const formatPhone = (info: any) => {
+    const p =
+      info?.phone || info?.contact || info?.phoneNumber || info?.telephone;
+    return p || "Not provided";
+  };
 
   const syncJoinedEventState = async (events: any[]) => {
     const token = window.localStorage.getItem("token");
@@ -764,47 +807,6 @@ export function ClubProfile({ navigate }: ClubProfileProps) {
               </div>
             </div>
             {}
-            <div style={{ display: "flex", gap: 10 }}>
-              <button
-                onClick={() => setFollowed(!followed)}
-                style={{
-                  padding: "10px 20px",
-                  borderRadius: 12,
-                  background: followed ? "#22C55E" : "rgba(255,255,255,0.1)",
-                  backdropFilter: "blur(10px)",
-                  color: "white",
-                  fontSize: 14,
-                  fontWeight: 600,
-                  border: `1.5px solid ${followed ? "transparent" : "rgba(255,255,255,0.3)"}`,
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 7,
-                  transition: "all 0.2s",
-                }}
-              >
-                <Heart size={15} fill={followed ? "white" : "none"} />{" "}
-                {followed ? "Following" : "Follow"}
-              </button>
-              <button
-                style={{
-                  padding: "10px 20px",
-                  borderRadius: 12,
-                  background: "rgba(255,255,255,0.1)",
-                  backdropFilter: "blur(10px)",
-                  color: "white",
-                  fontSize: 14,
-                  fontWeight: 600,
-                  border: "1.5px solid rgba(255,255,255,0.3)",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 7,
-                }}
-              >
-                <Share2 size={15} /> Share
-              </button>
-            </div>
           </div>
         </div>
       </div>
@@ -1156,7 +1158,7 @@ export function ClubProfile({ navigate }: ClubProfileProps) {
                           margin: 0,
                         }}
                       >
-                        6:00 AM â€“ 11:00 PM Daily
+                        {formatHours(clubInfo)}
                       </p>
                     </div>
                   </div>
@@ -1188,7 +1190,7 @@ export function ClubProfile({ navigate }: ClubProfileProps) {
                           margin: 0,
                         }}
                       >
-                        3,200+ members
+                        {formatMembers(clubInfo)}
                       </p>
                     </div>
                   </div>
@@ -1220,7 +1222,7 @@ export function ClubProfile({ navigate }: ClubProfileProps) {
                           margin: 0,
                         }}
                       >
-                        +1 (415) 555-0190
+                        {formatPhone(clubInfo)}
                       </p>
                     </div>
                   </div>

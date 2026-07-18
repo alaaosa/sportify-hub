@@ -28,14 +28,14 @@ export class Club extends Model {
   })
   declare id: number;
 
-  @ForeignKey(() => User)
-  @Column({
-    type: DataType.INTEGER,
-  })
-  declare userId: number;
+  // @ForeignKey(() => User)
+  // @Column({
+  //   type: DataType.INTEGER,
+  // })
+  // declare userId: number;
 
-  @BelongsTo(() => User)
-  declare adminClub: User;
+  // @BelongsTo(() => User)
+  // declare adminClub: User;
 
   @Column({
     type: DataType.STRING,
